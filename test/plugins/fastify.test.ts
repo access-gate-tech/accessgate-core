@@ -49,8 +49,13 @@ vi.mock("../../src/plugins/fastify", () => {
   return {
     fastify: mockFastify,
     registerBasePlugins: vi.fn().mockImplementation(async () => {
-      await mockFastify.register(cors, { origin: "*" });
-      await mockFastify.register(helmet, { contentSecurityPolicy: false });
+      try {
+        await mockFastify.register(cors, { origin: "*" });
+        await mockFastify.register(helmet, { contentSecurityPolicy: false });
+      } catch (error) {
+        console.error("Error registering base plugins:", error);
+        throw error;
+      }
     }),
   };
 });
@@ -96,5 +101,12 @@ describe("Fastify Plugin Registration", () => {
       translateTime: "yyyy-mm-dd HH:MM:ss.l",
       ignore: "pid,hostname",
     });
+  });
+
+  it("should handle multiple registration errors", async () => {
+    vi.mocked(fastify.register)
+      .mockRejectedValueOnce(new Error("First error"))
+      .mockRejectedValueOnce(new Error("Second error"));
+    await expect(registerBasePlugins()).rejects.toThrow("First error");
   });
 });
