@@ -5,7 +5,16 @@ export default defineConfig({
     environment: "node",
     globals: true,
     coverage: {
-      reporter: ["text", "html"],
+      provider: "v8",
+      reporter: ["text", "html", "json", "lcov"],
+      exclude: [
+        "node_modules/**",
+        "dist/**",
+        "**/*.d.ts",
+        "**/*.test.ts",
+        "**/*.config.ts",
+        "**/types.ts",
+      ],
     },
   },
 });

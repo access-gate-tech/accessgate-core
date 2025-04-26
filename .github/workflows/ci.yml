@@ -40,3 +40,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: access-gate-tech/accessgate-core
+          directory: ./coverage
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
