@@ -2,15 +2,6 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 
-declare module "fastify" {
-  interface FastifyInstance {
-    config: {
-      PORT: string;
-      NODE_ENV: string;
-    };
-  }
-}
-
 export const fastify = Fastify({
   logger: {
     transport: {

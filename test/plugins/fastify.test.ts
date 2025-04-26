@@ -1,112 +1,122 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { fastify, registerBasePlugins } from "../../src/plugins/fastify";
+// fastify.test.ts
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
-import { FastifyInstance } from "fastify";
 
-declare module "fastify" {
-  interface FastifyInstance {
-    logger: {
-      transport: {
-        target: string;
-        options: {
-          translateTime: string;
-          ignore: string;
-        };
-      };
-    };
-  }
-}
-
-// Mock the plugins
-vi.mock("@fastify/cors", () => ({
-  default: vi.fn(),
-}));
-
-vi.mock("@fastify/helmet", () => ({
-  default: vi.fn(),
-}));
-
-// Mock the fastify instance
-vi.mock("../../src/plugins/fastify", () => {
-  const mockFastify = {
-    register: vi.fn(),
-    config: {
-      PORT: "3000",
-      NODE_ENV: "test",
+// Mock the fastify and its plugins
+const mockFastify = vi.hoisted(() =>
+  vi.fn(() => ({
+    register: vi.fn().mockResolvedValue(undefined),
+    log: {
+      info: vi.fn(),
+      error: vi.fn(),
     },
-    logger: {
-      transport: {
-        target: "pino-pretty",
-        options: {
-          translateTime: "yyyy-mm-dd HH:MM:ss.l",
-          ignore: "pid,hostname",
-        },
-      },
-    },
-  } as unknown as FastifyInstance;
+  }))
+);
 
-  return {
-    fastify: mockFastify,
-    registerBasePlugins: vi.fn().mockImplementation(async () => {
-      try {
-        await mockFastify.register(cors, { origin: "*" });
-        await mockFastify.register(helmet, { contentSecurityPolicy: false });
-      } catch (error) {
-        console.error("Error registering base plugins:", error);
-        throw error;
-      }
-    }),
-  };
+vi.mock("fastify", () => {
+  return { default: mockFastify };
 });
 
-describe("Fastify Plugin Registration", () => {
+vi.mock("@fastify/cors", () => {
+  return { default: vi.fn() };
+});
+
+vi.mock("@fastify/helmet", () => {
+  return { default: vi.fn() };
+});
+
+describe("Fastify Configuration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear module cache before each test
+    vi.resetModules();
   });
 
-  it("should register base plugins successfully", async () => {
-    await registerBasePlugins();
-    expect(fastify.register).toHaveBeenCalledWith(cors, {
-      origin: "*",
-    });
-    expect(fastify.register).toHaveBeenCalledWith(helmet, {
-      contentSecurityPolicy: false,
-    });
+  afterEach(() => {
+    vi.resetAllMocks();
   });
 
-  it("should handle CORS registration error", async () => {
-    vi.mocked(fastify.register).mockRejectedValueOnce(
-      new Error("CORS registration failed")
-    );
-    await expect(registerBasePlugins()).rejects.toThrow(
-      "CORS registration failed"
-    );
-  });
+  describe("fastify instance", () => {
+    it("should create a fastify instance with correct logger configuration", async () => {
+      // Import the module fresh to trigger instance creation
+      const { fastify } = await import("../../src/plugins/fastify");
 
-  it("should handle Helmet registration error", async () => {
-    vi.mocked(fastify.register)
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error("Helmet registration failed"));
-    await expect(registerBasePlugins()).rejects.toThrow(
-      "Helmet registration failed"
-    );
-  });
-
-  it("should have correct logger configuration", () => {
-    expect(fastify.logger).toBeDefined();
-    expect(fastify.logger.transport).toBeDefined();
-    expect(fastify.logger.transport.target).toBe("pino-pretty");
-    expect(fastify.logger.transport.options).toEqual({
-      translateTime: "yyyy-mm-dd HH:MM:ss.l",
-      ignore: "pid,hostname",
+      expect(mockFastify).toHaveBeenCalledWith({
+        logger: {
+          transport: {
+            target: "pino-pretty",
+            options: {
+              translateTime: "yyyy-mm-dd HH:MM:ss.l",
+              ignore: "pid,hostname",
+            },
+          },
+        },
+      });
     });
   });
 
-  it("should handle multiple registration errors", async () => {
-    vi.mocked(fastify.register)
-      .mockRejectedValueOnce(new Error("First error"))
-      .mockRejectedValueOnce(new Error("Second error"));
-    await expect(registerBasePlugins()).rejects.toThrow("First error");
+  describe("registerBasePlugins", () => {
+    it("should register cors plugin with correct options", async () => {
+      const { fastify, registerBasePlugins } = await import(
+        "../../src/plugins/fastify"
+      );
+      await registerBasePlugins();
+
+      expect(fastify.register).toHaveBeenCalledWith(cors, {
+        origin: "*",
+      });
+    });
+
+    it("should register helmet plugin with correct options", async () => {
+      const { fastify, registerBasePlugins } = await import(
+        "../../src/plugins/fastify"
+      );
+      await registerBasePlugins();
+
+      expect(fastify.register).toHaveBeenCalledWith(helmet, {
+        contentSecurityPolicy: false,
+      });
+    });
+
+    it("should throw an error if plugin registration fails", async () => {
+      const { fastify, registerBasePlugins } = await import(
+        "../../src/plugins/fastify"
+      );
+      const mockError = new Error("Plugin registration failed");
+
+      // Make the register method throw an error for this test
+      vi.mocked(fastify.register).mockRejectedValueOnce(mockError);
+
+      await expect(registerBasePlugins()).rejects.toThrow(
+        "Plugin registration failed"
+      );
+    });
+
+    it("should log error if plugin registration fails", async () => {
+      const { fastify, registerBasePlugins } = await import(
+        "../../src/plugins/fastify"
+      );
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const mockError = new Error("Plugin registration failed");
+
+      // Make the register method throw an error for this test
+      vi.mocked(fastify.register).mockRejectedValueOnce(mockError);
+
+      try {
+        await registerBasePlugins();
+      } catch (error) {
+        // We expect this to throw
+      }
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error registering base plugins:",
+        mockError
+      );
+      consoleSpy.mockRestore();
+    });
   });
 });
