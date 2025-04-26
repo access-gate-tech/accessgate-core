@@ -23,6 +23,8 @@
     "typescript": "^5.2.2",
     "vite": "^6.3.3",
     "vite-node": "^3.1.2",
-    "vitest": "^3.1.2"
+    "vitest": "^3.1.2",
+    "@vitest/expect": "^3.1.2",
+    "@vitest/coverage-v8": "^3.1.2"
   }
 }
