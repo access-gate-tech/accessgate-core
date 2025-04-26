@@ -51,6 +51,16 @@ npm run dev
 
 This will start the server with hot-reload enabled.
 
+## Building
+
+To build the project:
+
+```bash
+npm run build
+```
+
+This will compile the TypeScript code into JavaScript in the `dist` directory.
+
 ## Testing
 
 The project uses Vitest for testing. Available test commands:
