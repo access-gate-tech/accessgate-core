@@ -1,5 +1,8 @@
 # AccessGate Core
 
+[![CI](https://github.com/access-gate-tech/accessgate-core/actions/workflows/ci.yml/badge.svg)](https://github.com/access-gate-tech/accessgate-core/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/access-gate-tech/accessgate-core/graph/badge.svg?token=ZW2A6Q785T)](https://codecov.io/gh/access-gate-tech/accessgate-core)
+
 AccessGate Core is a Fastify-based backend service that provides authorization and policy management functionality. It's built with TypeScript and follows modern development practices.
 
 ## Features
