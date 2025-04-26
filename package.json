@@ -1,6 +1,7 @@
 {
-  "name": "accessgate-core",
+  "name": "@accessgate/accessgate-core",
   "version": "0.1.0",
+  "description": "AccessGate Core",
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
